@@ -1,0 +1,107 @@
+<?php
+
+/**
+ * @file
+ * SL7 Statictic module.
+ * 
+ * @author Semyon Dragunov <sam.dragunov@gmail.com>
+ * https://github.com/SemyonDragunov
+ */
+
+define('SL7_STATISTIC_ADMIN_PATH', SL7_CONTROL_PANEL_ADMIN_PATH. '/apps/statistic');
+
+/**
+ * Implements hook_menu().
+ */
+function sl7_statistic_menu() {
+
+  $items[SL7_STATISTIC_ADMIN_PATH] = array(
+    'title'            => 'Статистика',
+    'description'      => 'Настройка Яндекс и Google метрики. Верификация.',
+    'page callback'    => 'drupal_get_form',
+    'page arguments'   => array('sl7_statistic_settings_form'),
+    'access arguments' => array('sl7_statistic administer'),
+    'weight'           => -10,
+  );
+
+  return $items;
+}
+
+/**
+ * Implement hook_permission().
+ */
+function sl7_statistic_permission() {
+  return array(
+    'sl7_statistic administer' => array('title' => 'Доступ к настройке метрики'),
+  );
+}
+
+function sl7_statistic_settings_form($form, &$form_state) {
+
+  $form['yandex'] = array(
+    '#type'        => 'fieldset',
+    '#title'       => 'Яндекс',
+    '#collapsible' => TRUE,
+    '#collapsed'   => TRUE,
+  );
+  $form['yandex']['yandex_metric'] = array(
+    '#type'          => 'textarea',
+    '#title'         => 'Яндекс метрика',
+    '#description'   => 'Вставьте сюда код счетчика.',
+    '#default_value' => variable_get('yandex_metric'),
+  );
+  $form['yandex']['yandex_webmaster'] = array(
+    '#type'          => 'textfield',
+    '#title'         => 'Яндекс вебмастер',
+    '#description'   => 'Вставьте код от режиме проверки прав "Мета-тэг".',
+    '#default_value' => variable_get('yandex_webmaster'),
+  );
+
+  $form['google'] = array(
+    '#type'        => 'fieldset',
+    '#title'       => 'Google',
+    '#collapsible' => TRUE,
+    '#collapsed'   => TRUE,
+  );
+  $form['google']['google_metric'] = array(
+    '#type'          => 'textarea',
+    '#title'         => 'Google Analytics',
+    '#description'   => 'Вставьте сюда код счетчика.',
+    '#default_value' => variable_get('google_metric'),
+  );
+  $form['google']['google_webmaster'] = array(
+    '#markup' => '<strong>Google Search Console<br/>После добавления кода от Google Analytics выберите проверку по Альтернативному методу (Alternate methods) и укажите Google Analytics.</strong>',
+  );
+
+  return system_settings_form($form);
+}
+
+/**
+ * Implements hook_page_build().
+ */
+function sl7_statistic_page_build(&$page) {
+  $page['page_top']['yandex_metric'] = array(
+    '#markup' => variable_get('yandex_metric'),
+  );
+}
+
+/**
+ * Implements hook_preprocess_page().
+ */
+function sl7_statistic_preprocess_page(&$variables) {
+  if ($yandex_webmaster = variable_get('yandex_webmaster')) {
+    $element = array(
+      '#type' => 'markup',
+      '#markup' => $yandex_webmaster,
+    );
+    drupal_add_html_head($element, 'yandex-webmaster');
+  }
+
+  if ($google_metric = variable_get('google_metric')) {
+    $element = array(
+      '#type' => 'markup',
+      '#markup' => $google_metric,
+    );
+    drupal_add_html_head($element, 'google-metric');
+  }
+}
